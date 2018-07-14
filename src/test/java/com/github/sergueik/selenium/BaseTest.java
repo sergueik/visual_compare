@@ -2,11 +2,19 @@ package com.github.sergueik.selenium;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 import static java.io.File.separator;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.TakesScreenshot;
@@ -178,6 +186,127 @@ public class BaseTest {
 			}
 		}
 		return osName;
+	}
+	// based on:
+	// https://stackoverflow.com/questions/318239/how-do-i-set-environment-variables-from-java
+
+	/**
+	* Adds an environment variable the containing jvm run
+	* leaves the underlying system environment unmodified
+	* @param key The Name of the variable to set
+	* @param value The value of the variable to set
+	*/
+	@SuppressWarnings("unchecked")
+	public static <K, V> void setenv(final String key, final String value) {
+		try {
+			final Class<?> processEnvironmentClass = Class
+					.forName("java.lang.ProcessEnvironment");
+			final Field theEnvironmentField = processEnvironmentClass
+					.getDeclaredField("theEnvironment");
+			final boolean environmentAccessibility = theEnvironmentField
+					.isAccessible();
+			theEnvironmentField.setAccessible(true);
+
+			final Map<K, V> env = (Map<K, V>) theEnvironmentField.get(null);
+
+			if (osName.equals("windows")) {
+				if (value == null) {
+					env.remove(key);
+				} else {
+					env.put((K) key, (V) value);
+				}
+			} else {
+				final Class<K> variableClass = (Class<K>) Class
+						.forName("java.lang.ProcessEnvironment$Variable");
+				final Method convertToVariable = variableClass.getMethod("valueOf",
+						String.class);
+				final boolean conversionVariableAccessibility = convertToVariable
+						.isAccessible();
+				convertToVariable.setAccessible(true);
+
+				final Class<V> valueClass = (Class<V>) Class
+						.forName("java.lang.ProcessEnvironment$Value");
+				final Method convertToValue = valueClass.getMethod("valueOf",
+						String.class);
+				final boolean conversionValueAccessibility = convertToValue
+						.isAccessible();
+				convertToValue.setAccessible(true);
+
+				if (value == null) {
+					env.remove(convertToVariable.invoke(null, key));
+				} else {
+					env.put((K) convertToVariable.invoke(null, key),
+							(V) convertToValue.invoke(null, value));
+
+					convertToValue.setAccessible(conversionValueAccessibility);
+					convertToVariable.setAccessible(conversionVariableAccessibility);
+				}
+			}
+			theEnvironmentField.setAccessible(environmentAccessibility);
+
+			// OSX: apply the same to the case insensitive environment
+			final Field theCaseInsensitiveEnvironmentField = processEnvironmentClass
+					.getDeclaredField("theCaseInsensitiveEnvironment");
+			final boolean insensitiveAccessibility = theCaseInsensitiveEnvironmentField
+					.isAccessible();
+			theCaseInsensitiveEnvironmentField.setAccessible(true);
+			// Not entirely sure if this cast is needed
+			final Map<String, String> cienv = (Map<String, String>) theCaseInsensitiveEnvironmentField
+					.get(null);
+			if (value == null) {
+				cienv.remove(key);
+			} else {
+				cienv.put(key, value);
+			}
+			theCaseInsensitiveEnvironmentField
+					.setAccessible(insensitiveAccessibility);
+		} catch (final InvocationTargetException | ClassNotFoundException
+				| NoSuchMethodException | IllegalAccessException e) {
+			throw new IllegalStateException(
+					String.format("Failed setting environment variable \"%s\" to \"%s\"",
+							key, value),
+					e);
+		} catch (final NoSuchFieldException e) {
+			final Map<String, String> env = System.getenv();
+			Arrays.asList(Collections.class.getDeclaredClasses()).stream()
+					.filter(_class -> "java.util.Collections$UnmodifiableMap"
+							.equals(_class.getName()))
+					.map(_class -> {
+						try {
+							return _class.getDeclaredField("m");
+						} catch (final NoSuchFieldException e1) {
+							throw new IllegalStateException(String.format(
+									"Failed setting environment variable \"%s\" to \"%s\" "
+											+ "when locating in-class memory map of environment",
+									key, value), e1);
+						}
+					}).forEach(field -> {
+						try {
+							final boolean fieldAccessibility = field.isAccessible();
+							field.setAccessible(true);
+							final Map<String, String> map = (Map<String, String>) field
+									.get(env);
+							if (value == null) {
+								map.remove(key);
+							} else {
+								map.put(key, value);
+							}
+							// reset the accessibility
+							field.setAccessible(fieldAccessibility);
+						} catch (final ConcurrentModificationException e1) {
+							System.err.println("Exception from attempt to modify source map: "
+									+ field.getDeclaringClass() + "#" + field.getName() + " : "
+									+ e1);
+						} catch (final IllegalAccessException e1) {
+							throw new IllegalStateException(String.format(
+									"Failed setting environment variable \"%s\" to \"%s\" "
+											+ "Unable to access field!",
+									key, value), e1);
+						}
+					});
+		}
+		System.err.println(
+				String.format("Set environment variable \"%s\" to \"%s\"", key, value));
 	}
 
 }

@@ -1,5 +1,6 @@
 package com.github.sergueik.selenium;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.awt.Rectangle;
@@ -70,6 +71,8 @@ public class VisualTest extends BaseTest {
 	public File differenceFileForParent;
 
 	private String imageMagickPath;
+	// NOTE: optional. Set to null to disable
+	private String envKey = "IM4JAVA_TOOLPATH";
 
 	@BeforeClass
 	public void setupTestClass(ITestContext context) throws IOException {
@@ -87,6 +90,12 @@ public class VisualTest extends BaseTest {
 			for (String app : Arrays.asList(new String[] { "convert", "compare" })) {
 				assertTrue(new File(imageMagickPath + "\\" + app + ".exe").exists(),
 						String.format("\"%s.exe\" has to be present", app));
+			}
+			if (envKey != null) {
+				setenv(envKey.toLowerCase(), imageMagickPath);
+				assertEquals(System.getenv(envKey), imageMagickPath,
+						String.format("The env %s has to be present and equal to: \"s\"",
+								envKey, imageMagickPath));
 			}
 		}
 		// setup WebDriver
