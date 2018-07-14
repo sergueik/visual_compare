@@ -1,5 +1,4 @@
-
-package org.utils;
+package com.github.sergueik.selenium;
 
 import static org.testng.Assert.assertTrue;
 

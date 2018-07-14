@@ -2,12 +2,12 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="Visual Automation">
   <listeners>
-    <listener class-name="org.utils.ScreenshotTestListener"/>
+    <listener class-name="com.github.sergueik.selenium.ScreenshotTestListener"/>
   </listeners>
   <test name="RunTest" preserve-order="true">
     <classes>
-      <class name="org.utils.VisualTest"/>
-      <class name="org.utils.ShareDataTest"/>
+      <class name="com.github.sergueik.selenium.VisualTest"/>
+      <class name="com.github.sergueik.selenium.ShareDataTest"/>
     </classes>
   </test>
 </suite>
