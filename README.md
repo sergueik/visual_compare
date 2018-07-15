@@ -80,6 +80,7 @@ Therefore the version of Selenium driver jar in the `pom.xml` should not be newe
   * [jmagick](https://github.com/techblue/jmagick)
   * http://codoid.com/automation-testing-comparing-screenshots/
   * [ocular](https://github.com/vinsguru/ocular)
+  * [jsoup cookbook introduction](https://jsoup.org/cookbook/introduction/parsing-a-document)
 
 ### Author
 [Serguei Kouzmine](kouzmine_serguei@yahoo.com)

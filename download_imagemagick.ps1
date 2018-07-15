@@ -51,6 +51,15 @@ $table_node = $sibling_node
 $html_file_obj2 = new-object -COM 'HTMLFile'
 $html_file_obj2.IHTMLDocument2_write($table_node.innerHTML)
 $html_file_obj2.IHTMLDocument3_getElementsByTagName('a') | foreach-object {
-  write-output $_.getAttribute('href')
+$html_file_obj2.IHTMLDocument3_getElementsByTagName('a') | foreach-object {
+  write-output $download_url
+  $download_url = $_.getAttribute('href')
   # write-output $_.Text
 }
+exit 0
+# Silent install
+$local_filename = ((resolve-path -path '.').path  + '\' + 'ImageMagick-installer.exe' ) ;
+$download_url = 'https://www.imagemagick.org/download/binaries/ImageMagick-7.0.8-6-Q16-x64-dll.exe' ;
+(New-Object System.Net.WebClient).DownloadFile($download_url, $local_filename) ;
+
+cmd /c $local_filename /SUPPRESSMSGBOXES /VERYSILENT /DIR=C:\tools\ImageMagick
