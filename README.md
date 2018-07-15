@@ -3,7 +3,7 @@
 This directory contains a derivative of project [swtestacademy/VisualAutomationImageMagickSelenium](https://github.com/swtestacademy/VisualAutomationImageMagickSelenium).
 
 Note: on Window, you can install either static or dynamically linked application
-[ImageMagick-7.0.6-3-Q16-x64-static.exe](https://www.imagemagick.org/script/download.php), make sure you will need to
+from [https://www.imagemagick.org/script/download.php](https://www.imagemagick.org/script/download.php), make sure you will need to
 copy the `magic.exe` to `convert.exe` and `compare.exe` after installation and run the installer -
 avoid file copy install: on Windows the Image Magick uses Windows Registry to find its own location.
 The error
@@ -74,7 +74,10 @@ Therefore the version of Selenium driver jar in the `pom.xml` should not be newe
 ### See Also
 
   * http://www.programcreek.com/java-api-examples/index.php?api=org.im4java.core.ConvertCmd
+  * [Widen/im4java](https://github.com/Widen/im4java)
   * [im4java guide](http://im4java.sourceforge.net/docs/dev-guide.html)
+  * [im4java util](https://github.com/hailin0/im4java-util)
+  * [jmagick](https://github.com/techblue/jmagick)
   * http://codoid.com/automation-testing-comparing-screenshots/
   * [ocular](https://github.com/vinsguru/ocular)
 
