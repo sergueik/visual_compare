@@ -63,12 +63,14 @@ public class ScreenshotTestListener implements ITestListener {
 
 	@Override
 	public void onTestSkipped(ITestResult result) {
-		throw new UnsupportedOperationException("Not supported yet.");
+		// TODO: observed to occasionally fail the test.
+		//	throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	@Override
 	public void onTestFailedButWithinSuccessPercentage(ITestResult result) {
-		throw new UnsupportedOperationException("Not supported yet.");
+		// TODO: observed to occasionally fail the test.
+		// throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	@Override
