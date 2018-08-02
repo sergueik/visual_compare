@@ -56,21 +56,6 @@ compare \
 
 In addition the project can resize the screen shots with the help of Image Magick.
 
-
-### TODO:
-With recent versions of Selenium jars in the `pom.xml` one has the following runtine errors:
-
-__3.8.1__:
-```
-java.lang.NoSuchMethodError: com.google.common.util.concurrent.SimpleTimeLimiter.create(Ljava/util/concurrent/ExecutorService;)Lcom/google/common/util/concurrent/SimpleTimeLimiter;
-        at org.utils.VisualTest.setupTestClass(VisualTest.java:87)
-```
-__3.4.0__:
-```
-java.lang.NoSuchMethodError: com.sun.jna.platform.win32.WinNT$PSID.createFieldsOrder(Ljava/lang/String;)Ljava/util/List;
-```
-Therefore the version of Selenium driver jar in the `pom.xml` should not be newer than __3.3.1__.
-
 ### See Also
 
   * http://www.programcreek.com/java-api-examples/index.php?api=org.im4java.core.ConvertCmd
