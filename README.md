@@ -4,8 +4,12 @@ This directory contains a derivative of project [swtestacademy/VisualAutomationI
 
 Note: on Window, you can install either static or dynamically linked application
 from [https://www.imagemagick.org/script/download.php](https://www.imagemagick.org/script/download.php), make sure you will need to
-copy the `magic.exe` to `convert.exe` and `compare.exe` after installation and run the installer -
-avoid file copy install: on Windows the Image Magick uses Windows Registry to find its own location.
+copy the `magic.exe` to `convert.exe` and `compare.exe` after installation and use the installer -
+avoid file copy install: on Windows the Image Magick uses Windows Registry to find its own location. 
+The registry path to scan is in the `src/test/resources/application.properties`:
+```java
+imagemagickRegistryPath: SOFTWARE\\ImageMagick\\7.0.8\\Q:16
+```
 The error
 ```java
 org.im4java.core.CommandException: org.im4java.core.CommandException: convert.exe: RegistryKeyLookupFailed `CoderModulesPath' @error/module.c/GetMagickModulePath/657.
@@ -27,9 +31,7 @@ in the `screenshots` folder of the project in a subfolder named after the test m
 In the clean run, the baseline screenshot of some example page element is created
 and saved as a new baseline but the image diff is neither computed nor saved: the original project logic has left unmodified in this regards.
 
-The program also saves the standalone comparison script into the file `myscript.cmd` (`myscript` on Unix)
-in the following format:
-
+The program also saves the standalone comparison script into the file `myscript.cmd` on Windows:
 ```cmd
 @echo off
 REM -------------------------------------------------------
@@ -42,7 +44,7 @@ compare ^
    -fuzz "5.0" ^
   -metric "AE" "ScreenShots\imageCompareTest\imageCompareTest_Baseline.png" "ScreenShots\imageCompareTest\imageCompareTest_Actual.png" "ScreenShots\imageCompareTest\imageCompareTest_Diff.png"
 ```
-or, on Linux box,
+and `myscript` on Unix:
 ```sh
 #!/bin/bash
 #-------------------------------------------------------
@@ -55,6 +57,7 @@ compare \
 ```
 
 In addition the project can resize the screen shots with the help of Image Magick.
+The cleanup script `cleanup.cmd` is provided.
 
 ### See Also
 
@@ -69,3 +72,4 @@ In addition the project can resize the screen shots with the help of Image Magic
 
 ### Author
 [Serguei Kouzmine](kouzmine_serguei@yahoo.com)
+s

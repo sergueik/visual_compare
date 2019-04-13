@@ -7,6 +7,9 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
 import static java.io.File.separator;
 import java.io.IOException;
 
@@ -17,7 +20,13 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 
@@ -43,10 +52,18 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.sun.jna.platform.win32.Advapi32Util;
+import com.sun.jna.platform.win32.Win32Exception;
 import com.sun.jna.platform.win32.WinReg;
 import java.awt.image.RasterFormatException;
 
 public class VisualTest extends BaseTest {
+
+	final static String propertiesFilename = String.format(
+			"%s/src/test/resources/%s", System.getProperty("user.dir"),
+			"application.properties");
+
+	private static Properties p = new Properties();
+	private static Map<String, String> propertiesMap = new HashMap<>();
 
 	public String baseURL = "http://www.kariyer.net";
 
@@ -78,12 +95,44 @@ public class VisualTest extends BaseTest {
 	public void setupTestClass(ITestContext context) throws IOException {
 
 		if (getOSName().equals("windows")) {
-			System.err.println("Determine path to ImageMagick.");
+			System.err.println("Reading registry configuration of ImageMagick.");
 
-			imageMagickPath = Advapi32Util.registryGetStringValue(
-					WinReg.HKEY_LOCAL_MACHINE, "SOFTWARE\\ImageMagick\\Current",
-					"BinPath");
-			System.err.println("ImageMagick path: " + imageMagickPath);
+			try {
+				System.err.println(
+						"Reading appliction properties file: " + propertiesFilename);
+				p.load(new FileInputStream(propertiesFilename));
+				@SuppressWarnings("unchecked")
+				Enumeration<String> e = (Enumeration<String>) p.propertyNames();
+				for (; e.hasMoreElements();) {
+					String key = e.nextElement();
+					String val = p.get(key).toString();
+					System.err.println(String.format("Reading: '%s' = '%s'", key, val));
+					propertiesMap.put(key, resolveEnvVars(val));
+				}
+
+			} catch (FileNotFoundException e) {
+				System.err.println(String.format("Properties file was not found: '%s'",
+						propertiesFilename));
+				e.printStackTrace();
+			} catch (IOException e) {
+				System.err.println(String.format(
+						"Properties file is not readable: '%s'", propertiesFilename));
+				e.printStackTrace();
+			}
+
+			// there could be no "Current" subkey
+			String imagemagickRegistryPath = (propertiesMap
+					.containsKey("imagemagickRegistryPath"))
+							? propertiesMap.get("imagemagickRegistryPath")
+							: "SOFTWARE\\ImageMagick\\Current";
+			try {
+				imageMagickPath = Advapi32Util.registryGetStringValue(
+						WinReg.HKEY_LOCAL_MACHINE, imagemagickRegistryPath, "BinPath");
+				System.err.println("ImageMagick path: " + imageMagickPath);
+			} catch (Win32Exception e) {
+				throw new RuntimeException("Error reading registry path: "
+						+ imagemagickRegistryPath + "\n" + e.toString());
+			}
 
 			// Make sure the 'convert.exe' and 'compare.exe' exist in the
 			// Image Magick home directory and can be executed
@@ -444,4 +493,20 @@ public class VisualTest extends BaseTest {
 		}
 	}
 
+	public static String resolveEnvVars(String input) {
+		if (null == input) {
+			return null;
+		}
+		Pattern p = Pattern.compile("\\$(?:\\{(\\w+)\\}|(\\w+))");
+		Matcher m = p.matcher(input);
+		StringBuffer sb = new StringBuffer();
+		while (m.find()) {
+			String envVarName = null == m.group(1) ? m.group(2) : m.group(1);
+			String envVarValue = System.getenv(envVarName);
+			m.appendReplacement(sb,
+					null == envVarValue ? "" : envVarValue.replace("\\", "\\\\"));
+		}
+		m.appendTail(sb);
+		return sb.toString();
+	}
 }
