@@ -66,10 +66,16 @@ The cleanup script `cleanup.cmd` is provided.
   * [im4java guide](http://im4java.sourceforge.net/docs/dev-guide.html)
   * [im4java util](https://github.com/hailin0/im4java-util)
   * [jmagick](https://github.com/techblue/jmagick)
+  * image magick [usage](http://www.imagemagick.org/Usage/)
+  * java code examples of [ConvertCmd](https://www.programcreek.com/java-api-examples/?api=org.im4java.core.ConvertCmd) API
+  * java code examples of [IMOperation](https://www.programcreek.com/java-api-examples/index.php?api=org.im4java.core.IMOperation) class
+  * convertcmd option details for [background cleanup](https://snippets.aktagon.com/snippets/558-how-to-remove-a-background-with-imagemagick)
   * http://codoid.com/automation-testing-comparing-screenshots/
   * [ocular](https://github.com/vinsguru/ocular)
+  * [kreyssel/selenium2-visualdiff](https://github.com/kreyssel/selenium2-visualdiff) using `javax.imageio.ImageIO` and `java.awt.image.BufferedImage`
   * [jsoup cookbook introduction](https://jsoup.org/cookbook/introduction/parsing-a-document)
+  * java [library](https://github.com/romankh3/image-comparison) that compares 2 images with the same sizes pixel by pexel and draws rectangles around the image differences visually, also available in [maven central](https://search.maven.org/artifact/com.github.romankh3/image-comparison/3.1.1/jar)
 
 ### Author
 [Serguei Kouzmine](kouzmine_serguei@yahoo.com)
-s
+
