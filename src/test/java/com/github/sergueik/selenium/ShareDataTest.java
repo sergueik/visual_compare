@@ -44,9 +44,6 @@ public class ShareDataTest extends BaseTest {
 		}
 	}
 
-	/**
-	 * An inner POJO class.
-	 */
 	public static class Element {
 		private String name;
 		private int count;
@@ -65,10 +62,6 @@ public class ShareDataTest extends BaseTest {
 		}
 	}
 
-	/**
-	 * Interface which indicates that the annotated Test method needs to be injected with
-	 * something.
-	 */
 	@Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
 	@Target({ METHOD, TYPE })
 	@interface Inject {

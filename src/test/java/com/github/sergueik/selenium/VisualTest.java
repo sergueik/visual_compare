@@ -58,11 +58,13 @@ import java.awt.image.RasterFormatException;
 
 public class VisualTest extends BaseTest {
 
+	static String diffScript = null;
+
 	final static String propertiesFilename = String.format(
 			"%s/src/test/resources/%s", System.getProperty("user.dir"),
 			"application.properties");
 
-	private static Properties p = new Properties();
+	private static Properties properties = new Properties();
 	private static Map<String, String> propertiesMap = new HashMap<>();
 
 	public String baseURL = "http://www.kariyer.net";
@@ -87,64 +89,66 @@ public class VisualTest extends BaseTest {
 	public File differenceImageFile;
 	public File differenceFileForParent;
 
-	private String imageMagickPath;
+	private String toolPathSetting;
 	// NOTE: optional. Set to null to disable
 	private String envKey = "IM4JAVA_TOOLPATH";
 
 	@BeforeClass
+
+	// there could be no "Current" subkey
 	public void setupTestClass(ITestContext context) throws IOException {
 
-		if (getOSName().equals("windows")) {
-			System.err.println("Reading registry configuration of ImageMagick.");
-
-			try {
-				System.err.println(
-						"Reading appliction properties file: " + propertiesFilename);
-				p.load(new FileInputStream(propertiesFilename));
-				@SuppressWarnings("unchecked")
-				Enumeration<String> e = (Enumeration<String>) p.propertyNames();
-				for (; e.hasMoreElements();) {
-					String key = e.nextElement();
-					String val = p.get(key).toString();
-					System.err.println(String.format("Reading: '%s' = '%s'", key, val));
-					propertiesMap.put(key, resolveEnvVars(val));
-				}
-
-			} catch (FileNotFoundException e) {
-				System.err.println(String.format("Properties file was not found: '%s'",
-						propertiesFilename));
-				e.printStackTrace();
-			} catch (IOException e) {
-				System.err.println(String.format(
-						"Properties file is not readable: '%s'", propertiesFilename));
-				e.printStackTrace();
+		try {
+			System.err.println("Reading properties file: " + propertiesFilename);
+			properties.load(new FileInputStream(propertiesFilename));
+			@SuppressWarnings("unchecked")
+			Enumeration<String> propertiesEnum = (Enumeration<String>) properties
+					.propertyNames();
+			for (; propertiesEnum.hasMoreElements();) {
+				String key = propertiesEnum.nextElement();
+				String val = properties.get(key).toString();
+				System.err.println(String.format("Reading: '%s' = '%s'", key, val));
+				propertiesMap.put(key, resolveEnvVars(val));
 			}
 
-			// there could be no "Current" subkey
+		} catch (FileNotFoundException e) {
+			System.err.println(String.format("Properties file was not found: '%s'",
+					propertiesFilename));
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.err.println(String.format("Properties file is not readable: '%s'",
+					propertiesFilename));
+			e.printStackTrace();
+		}
+		if (getOSName().equals("windows")) {
 			String imagemagickRegistryPath = (propertiesMap
 					.containsKey("imagemagickRegistryPath"))
 							? propertiesMap.get("imagemagickRegistryPath")
 							: "SOFTWARE\\ImageMagick\\Current";
 			try {
-				imageMagickPath = Advapi32Util.registryGetStringValue(
+				System.err
+						.println("Reading ImageMagick configuration from registry path "
+								+ imagemagickRegistryPath);
+				toolPathSetting = Advapi32Util.registryGetStringValue(
 						WinReg.HKEY_LOCAL_MACHINE, imagemagickRegistryPath, "BinPath");
-				System.err.println("ImageMagick path: " + imageMagickPath);
+				System.err.println("ImageMagick path: " + toolPathSetting);
 			} catch (Win32Exception e) {
 				throw new RuntimeException("Error reading registry path: "
 						+ imagemagickRegistryPath + "\n" + e.toString());
 			}
-
+			diffScript = (propertiesMap.containsKey("diffScript"))
+					? propertiesMap.get("diffScript") : "diff_script";
 			// Make sure the 'convert.exe' and 'compare.exe' exist in the
 			// Image Magick home directory and can be executed
 			for (String app : Arrays.asList(new String[] { "convert", "compare" })) {
-				assertTrue(new File(imageMagickPath + "\\" + app + ".exe").exists(),
+				assertTrue(new File(toolPathSetting + "\\" + app + ".exe").exists(),
 						String.format("\"%s.exe\" has to be present", app));
 			}
 			if (envKey != null) {
-				setenv(envKey.toLowerCase(), imageMagickPath);
-				assertEquals(System.getenv(envKey), imageMagickPath,
+				setenv(envKey.toLowerCase(), toolPathSetting);
+				assertEquals(System.getenv(envKey), toolPathSetting,
 						String.format("The env %s has to be present and equal to: \"s\"",
-								envKey, imageMagickPath));
+								envKey, toolPathSetting));
 			}
 		}
 		// setup WebDriver
@@ -386,10 +390,32 @@ public class VisualTest extends BaseTest {
 		differenceFileForParent = new File(parentDifferencesLocation + diff);
 	}
 
+	public void removeImageBackground(String imagePath) throws RuntimeException {
+		File file = new File(imagePath);
+		if (!file.exists()) {
+			throw new RuntimeException("File does not exist:" + imagePath);
+		}
+		ConvertCmd convertcmd = new ConvertCmd();
+		IMOperation imOperation = new IMOperation();
+		imOperation.addRawArgs("-fill", "none");
+		imOperation.addRawArgs("-fuzz", "1%");
+		imOperation.addRawArgs("-draw", "matte 0,0 floodfill");
+		imOperation.addRawArgs("--flop", "");
+		imOperation.addRawArgs("-draw", "matte 0,0 floodfill");
+		imOperation.addRawArgs("--flop", "");
+		imOperation.addImage();
+		Object[] listOfFiles = { imagePath };
+		try {
+			convertcmd.run(imOperation, listOfFiles);
+		} catch (Exception e) {
+			throw new RuntimeException("Unable to rotate Image", e);
+		}
+	}
+
 	public void resizeImagesWithImageMagick(String... pImageNames)
 			throws Exception {
 		ConvertCmd cmd = new ConvertCmd();
-		cmd.setSearchPath(imageMagickPath);
+		cmd.setSearchPath(toolPathSetting);
 		IMOperation imOperation = new IMOperation();
 		imOperation.addImage();
 		imOperation.resize(200, 150);
@@ -415,10 +441,10 @@ public class VisualTest extends BaseTest {
 	public void compareImagesWithImageMagick(String expected, String actual,
 			String difference) throws Exception {
 
-		ProcessStarter.setGlobalSearchPath(imageMagickPath);
+		ProcessStarter.setGlobalSearchPath(toolPathSetting);
 
 		CompareCmd compare = new CompareCmd();
-		compare.setSearchPath(imageMagickPath);
+		compare.setSearchPath(toolPathSetting);
 
 		// fix java.lang.NullPointerExceptionTests
 		// compare.setErrorConsumer(StandardStream.STDERR);
@@ -443,11 +469,10 @@ public class VisualTest extends BaseTest {
 		// This stores the difference
 		imOperation.addImage(difference);
 
-		String script = "myscript";
 		try {
 			System.err.println("Comparison Started");
-			compare.createScript(script, imOperation);
-			System.err.println("Comparison Script written to " + script);
+			compare.createScript(diffScript, imOperation);
+			System.err.println("Comparison Script written to " + diffScript);
 			compare.run(imOperation);
 		} catch (CommandException ex) {
 			// ignore
@@ -497,16 +522,17 @@ public class VisualTest extends BaseTest {
 		if (null == input) {
 			return null;
 		}
-		Pattern p = Pattern.compile("\\$(?:\\{(\\w+)\\}|(\\w+))");
-		Matcher m = p.matcher(input);
-		StringBuffer sb = new StringBuffer();
-		while (m.find()) {
-			String envVarName = null == m.group(1) ? m.group(2) : m.group(1);
+		Pattern pattern = Pattern.compile("\\$(?:\\{(\\w+)\\}|(\\w+))");
+		Matcher matcher = pattern.matcher(input);
+		StringBuffer stringBuffer = new StringBuffer();
+		while (matcher.find()) {
+			String envVarName = null == matcher.group(1) ? matcher.group(2)
+					: matcher.group(1);
 			String envVarValue = System.getenv(envVarName);
-			m.appendReplacement(sb,
+			matcher.appendReplacement(stringBuffer,
 					null == envVarValue ? "" : envVarValue.replace("\\", "\\\\"));
 		}
-		m.appendTail(sb);
-		return sb.toString();
+		matcher.appendTail(stringBuffer);
+		return stringBuffer.toString();
 	}
 }

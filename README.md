@@ -31,7 +31,8 @@ in the `screenshots` folder of the project in a subfolder named after the test m
 In the clean run, the baseline screenshot of some example page element is created
 and saved as a new baseline but the image diff is neither computed nor saved: the original project logic has left unmodified in this regards.
 
-The program also saves the standalone comparison script into the file `myscript.cmd` on Windows:
+The program also generates the standalone comparison script in the project directory 
+The default filename is `myscript.cmd` for Windows:
 ```cmd
 @echo off
 REM -------------------------------------------------------
@@ -44,7 +45,7 @@ compare ^
    -fuzz "5.0" ^
   -metric "AE" "ScreenShots\imageCompareTest\imageCompareTest_Baseline.png" "ScreenShots\imageCompareTest\imageCompareTest_Actual.png" "ScreenShots\imageCompareTest\imageCompareTest_Diff.png"
 ```
-and `myscript` on Unix:
+and `myscript` for Unix:
 ```sh
 #!/bin/bash
 #-------------------------------------------------------
@@ -62,11 +63,11 @@ The cleanup script `cleanup.cmd` is provided.
 ### See Also
 
   * http://www.programcreek.com/java-api-examples/index.php?api=org.im4java.core.ConvertCmd
-  * [Widen/im4java](https://github.com/Widen/im4java)
+  * [Widen/im4java](https://github.com/Widen/im4java) is a pure-java interface to the ImageMagick commandline.
   * [im4java guide](http://im4java.sourceforge.net/docs/dev-guide.html)
   * [im4java util](https://github.com/hailin0/im4java-util)
   * [jmagick](https://github.com/techblue/jmagick)
-  * image magick [usage](http://www.imagemagick.org/Usage/)
+  * imagemagick [usage](http://www.imagemagick.org/Usage/)
   * java code examples of [ConvertCmd](https://www.programcreek.com/java-api-examples/?api=org.im4java.core.ConvertCmd) API
   * java code examples of [IMOperation](https://www.programcreek.com/java-api-examples/index.php?api=org.im4java.core.IMOperation) class
   * convertcmd option details for [background cleanup](https://snippets.aktagon.com/snippets/558-how-to-remove-a-background-with-imagemagick)
