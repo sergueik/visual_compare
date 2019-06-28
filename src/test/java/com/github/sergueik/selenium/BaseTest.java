@@ -6,14 +6,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import static java.io.File.separator;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.openqa.selenium.JavascriptExecutor;
@@ -28,6 +28,7 @@ import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -37,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-
 
 public class BaseTest {
 
@@ -53,11 +53,11 @@ public class BaseTest {
 
 	private static Map<String, String> config = new HashMap<>();
 	static {
-		config.put("success", "screenshots" + separator + "pass");
-		config.put("failure", "screenshots" + separator + "fail");
+		config.put("success", "screenshots" + File.separator + "pass");
+		config.put("failure", "screenshots" + File.separator + "fail");
 	}
 
-	private static final String browser = "chrome";
+	protected static final String browser = "chrome";
 
 	private int scriptTimeout = 5;
 	private int flexibleWait = 120;
@@ -89,8 +89,8 @@ public class BaseTest {
 
 			HashMap<String, Object> chromePrefs = new HashMap<String, Object>();
 			chromePrefs.put("profile.default_content_settings.popups", 0);
-			String downloadFilepath = System.getProperty("user.dir") + separator
-					+ "target" + separator;
+			String downloadFilepath = System.getProperty("user.dir") + File.separator
+					+ "target" + File.separator;
 			chromePrefs.put("download.default_directory", downloadFilepath);
 			chromePrefs.put("enableNetwork", "true");
 			options.setExperimentalOption("prefs", chromePrefs);
@@ -308,6 +308,60 @@ public class BaseTest {
 		}
 		System.err.println(
 				String.format("Set environment variable \"%s\" to \"%s\"", key, value));
+	}
+
+	protected static final String buildPathtoResourceFile(String fileName) {
+		return String.join(File.separator, Arrays.asList(
+				System.getProperty("user.dir"), "src", "test", "resources", fileName));
+	}
+
+	public void sleep(int milis) {
+		try {
+			Thread.sleep((long) milis);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	protected void waitJS() {
+		// Wait for core Javascript to load
+		ExpectedCondition<Boolean> jsLoad = driver -> ((JavascriptExecutor) driver)
+				.executeScript("return document.readyState").toString()
+				.equals("complete");
+		wait.until(jsLoad);
+
+		// wait for JQuery
+		ExpectedCondition<Boolean> jQueryLoad = driver -> ((Long) ((JavascriptExecutor) driver)
+				.executeScript("return jQuery.active") == 0);
+		wait.until(jQueryLoad);
+	}
+
+	protected Object executeScript(String script, Object... arguments) {
+		if (driver instanceof JavascriptExecutor) {
+			JavascriptExecutor javascriptExecutor = JavascriptExecutor.class
+					.cast(driver);
+			return javascriptExecutor.executeScript(script, arguments);
+		} else {
+			throw new RuntimeException("Script execution failed.");
+		}
+	}
+
+	public static String resolveEnvVars(String input) {
+		if (null == input) {
+			return null;
+		}
+		Pattern pattern = Pattern.compile("\\$(?:\\{(\\w+)\\}|(\\w+))");
+		Matcher matcher = pattern.matcher(input);
+		StringBuffer stringBuffer = new StringBuffer();
+		while (matcher.find()) {
+			String envVarName = null == matcher.group(1) ? matcher.group(2)
+					: matcher.group(1);
+			String envVarValue = System.getenv(envVarName);
+			matcher.appendReplacement(stringBuffer,
+					null == envVarValue ? "" : envVarValue.replace("\\", "\\\\"));
+		}
+		matcher.appendTail(stringBuffer);
+		return stringBuffer.toString();
 	}
 
 }

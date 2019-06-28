@@ -9,14 +9,27 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-
-import static java.io.File.separator;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.commons.io.FileUtils;
-import com.google.common.io.Files;
+// import com.google.common.io.Files;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 import java.lang.reflect.Method;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -55,6 +68,7 @@ import com.sun.jna.platform.win32.Advapi32Util;
 import com.sun.jna.platform.win32.Win32Exception;
 import com.sun.jna.platform.win32.WinReg;
 import java.awt.image.RasterFormatException;
+import org.yaml.snakeyaml.Yaml;
 
 public class VisualTest extends BaseTest {
 
@@ -72,12 +86,12 @@ public class VisualTest extends BaseTest {
 	public String testName;
 	public String testScreenShotDirectory;
 	public String parentScreenShotsLocation = System.getProperty("user.dir")
-			+ separator + "screenshots" + separator;
+			+ File.separator + "screenshots" + File.separator;
 
 	// Main differences directory
 	// TODO: remove
 	public String parentDifferencesLocation = System.getProperty("user.dir")
-			+ separator + "differences" + separator;
+			+ File.separator + "differences" + File.separator;
 
 	// Element screenshot paths
 	public String baselinePath;
@@ -98,6 +112,20 @@ public class VisualTest extends BaseTest {
 	// there could be no "Current" subkey
 	public void setupTestClass(ITestContext context) throws IOException {
 
+		String fileName = buildPathtoResourceFile("application.yaml");
+		InputStream in;
+		try {
+			// load with snakeyaml
+			in = Files.newInputStream(Paths.get(fileName));
+			Map<String, Object> data = (Map<String, Object>) new Yaml().load(in);
+			Map<String, Object> data1 = (Map<String, Object>) data.get(getOSName());
+			Map<String, Object> data2 = (Map<String, Object>) data1.get("driver");
+			String config = resolveEnvVars((String) data2.get(browser));
+			System.err.println("Reading new application configuration: " + config);
+
+		} catch (IOException e) {
+			System.err.println("Exception (ignored): " + e.toString());
+		}
 		try {
 			System.err.println("Reading properties file: " + propertiesFilename);
 			properties.load(new FileInputStream(propertiesFilename));
@@ -176,7 +204,8 @@ public class VisualTest extends BaseTest {
 		testName = method.getName();
 		System.err.println("Test Name: " + testName + "\n");
 
-		testScreenShotDirectory = parentScreenShotsLocation + testName + separator;
+		testScreenShotDirectory = parentScreenShotsLocation + testName
+				+ File.separator;
 		createFolder(testScreenShotDirectory);
 
 		// Declare element screenshot paths
@@ -249,11 +278,11 @@ public class VisualTest extends BaseTest {
 		Thread.sleep(2000);
 
 		takeScreenshotOfWebelement(driver, element,
-				testScreenShotDirectory + separator + "test.png");
+				testScreenShotDirectory + File.separator + "test.png");
 
 		// Resize
 		resizeImagesWithImageMagick(
-				testScreenShotDirectory + separator + "test.png");
+				testScreenShotDirectory + File.separator + "test.png");
 	}
 
 	// utils
@@ -484,55 +513,8 @@ public class VisualTest extends BaseTest {
 			throw ex;
 		}
 		// Put the difference image to the global differences folder
-		Files.copy(differenceImageFile, differenceFileForParent);
+		com.google.common.io.Files.copy(differenceImageFile,
+				differenceFileForParent);
 	}
 
-	public void sleep(int milis) {
-		try {
-			Thread.sleep((long) milis);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void waitJS() {
-		// Wait for core Javascript to load
-		ExpectedCondition<Boolean> jsLoad = driver -> ((JavascriptExecutor) driver)
-				.executeScript("return document.readyState").toString()
-				.equals("complete");
-		wait.until(jsLoad);
-
-		// wait for JQuery
-		ExpectedCondition<Boolean> jQueryLoad = driver -> ((Long) ((JavascriptExecutor) driver)
-				.executeScript("return jQuery.active") == 0);
-		wait.until(jQueryLoad);
-	}
-
-	private Object executeScript(String script, Object... arguments) {
-		if (driver instanceof JavascriptExecutor) {
-			JavascriptExecutor javascriptExecutor = JavascriptExecutor.class
-					.cast(driver);
-			return javascriptExecutor.executeScript(script, arguments);
-		} else {
-			throw new RuntimeException("Script execution failed.");
-		}
-	}
-
-	public static String resolveEnvVars(String input) {
-		if (null == input) {
-			return null;
-		}
-		Pattern pattern = Pattern.compile("\\$(?:\\{(\\w+)\\}|(\\w+))");
-		Matcher matcher = pattern.matcher(input);
-		StringBuffer stringBuffer = new StringBuffer();
-		while (matcher.find()) {
-			String envVarName = null == matcher.group(1) ? matcher.group(2)
-					: matcher.group(1);
-			String envVarValue = System.getenv(envVarName);
-			matcher.appendReplacement(stringBuffer,
-					null == envVarValue ? "" : envVarValue.replace("\\", "\\\\"));
-		}
-		matcher.appendTail(stringBuffer);
-		return stringBuffer.toString();
-	}
 }
