@@ -1,23 +1,34 @@
 ---
-mac:
-  browser:
-    firefox: /Applications/Firefox.app/Contents/MacOS/firefox
-linux:
-  driver:
-    chrome: ${HOME}/Downloads/chromedriver
-    gecko: ${HOME}/Downloads/geckodriver
-windows:
-  driver:
-    chrome: ${USERPROFILE}\Downloads\chromedriver.exe
-    # gecko: c:/java/selenium/geckodriver.exe
-    gecko: '${USERPROFILE}\Downloads\geckodriver.exe'
-    ie: c:/java/selenium/IEDriverServer.exe
-    edge: 'C:/Program Files (x86)/Microsoft Web Driver/MicrosoftWebDriver.exe'
-  browser:
-    firefox: 'C:/Program Files (x86)/Mozilla Firefox/firefox.exe'
-
+browser:
+  chrome:
+    mac: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+    linux:
+    windows: 'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
+  firefox:
+    mac: /Applications/Firefox.app/Contents/MacOS/firefox
+    windows: 'C:/Program Files (x86)/Mozilla Firefox/firefox.exe'
+driver:
+  chrome:
+    linux: ${HOME}/Downloads/chromedriver
+    mac: ~
+    windows: ${USERPROFILE}\Downloads\chromedriver.exe
+  firefox:
+    linux: ${HOME}/Downloads/geckodriver
+    mac: ${HOME}/Downloads/geckodrivers
+    windows: c:/java/selenium/geckodriver.exe
+    windows: '${USERPROFILE}\Downloads\geckodriver.exe'
+  ie:
+    linux: ~
+    mac: ~
+    windows: c:/java/selenium/IEDriverServer.exe
+  edge:
+    linux: ~
+    mac: ~
+    windows: 'C:/Program Files (x86)/Microsoft Web Driver/MicrosoftWebDriver.exe'
+    
 imagemagick:
-  registry: SOFTWARE\ImageMagick\7.0.8\Q:16
   version: '7.0.8'
+  windows: 
+    registry: SOFTWARE\ImageMagick\7.0.8\Q:16
 
 diffScript: myscript

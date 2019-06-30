@@ -5,7 +5,7 @@ This directory contains a derivative of project [swtestacademy/VisualAutomationI
 Note: on Window, you can install either static or dynamically linked application
 from [https://www.imagemagick.org/script/download.php](https://www.imagemagick.org/script/download.php), make sure you will need to
 copy the `magic.exe` to `convert.exe` and `compare.exe` after installation and use the installer -
-avoid file copy install: on Windows the Image Magick uses Windows Registry to find its own location. 
+avoid file copy install: on Windows the Image Magick uses Windows Registry to find its own location.
 The registry path to scan is in the `src/test/resources/application.properties`:
 ```java
 imagemagickRegistryPath: SOFTWARE\\ImageMagick\\7.0.8\\Q:16
@@ -31,7 +31,7 @@ in the `screenshots` folder of the project in a subfolder named after the test m
 In the clean run, the baseline screenshot of some example page element is created
 and saved as a new baseline but the image diff is neither computed nor saved: the original project logic has left unmodified in this regards.
 
-The program also generates the standalone comparison script in the project directory 
+The program also generates the standalone comparison script in the project directory
 The default filename is `myscript.cmd` for Windows:
 ```cmd
 @echo off

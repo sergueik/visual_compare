@@ -107,6 +107,7 @@ public class VisualTest extends BaseTest {
 	// NOTE: optional. Set to null to disable
 	private String envKey = "IM4JAVA_TOOLPATH";
 
+	@SuppressWarnings("unchecked")
 	@BeforeClass
 
 	// there could be no "Current" subkey
@@ -116,13 +117,32 @@ public class VisualTest extends BaseTest {
 		InputStream in;
 		try {
 			// load with snakeyaml
-			in = Files.newInputStream(Paths.get(fileName));
-			Map<String, Object> data = (Map<String, Object>) new Yaml().load(in);
-			Map<String, Object> data1 = (Map<String, Object>) data.get(getOSName());
-			Map<String, Object> data2 = (Map<String, Object>) data1.get("driver");
-			String config = resolveEnvVars((String) data2.get(browser));
-			System.err.println("Reading new application configuration: " + config);
+			// reasonably deeply nested configuration makes it inpractical to have
+			// multiple
+			// inner classes
 
+			Map<String, Object> configuration = (Map<String, Object>) new Yaml()
+					.load(Files.newInputStream(Paths.get(fileName)));
+			Map<String, Object> browserDrivers = (Map<String, Object>) configuration
+					.get("driver");
+			Map<String, Object> browserDriver = (Map<String, Object>) browserDrivers
+					.get(browser);
+			String driverPath = resolveEnvVars(
+					(String) browserDriver.get(getOSName()));
+
+			Map<String, Object> browsers = (Map<String, Object>) configuration
+					.get("browser");
+			Map<String, Object> browserPaths = (Map<String, Object>) browsers
+					.get(browser);
+			String browserPath = resolveEnvVars(
+					(String) browserPaths.get(getOSName()));
+
+			System.err.println(
+					"Reading new application configuration:" + " \n" + "browser: "
+							+ browser + " on " + getOSName() + "\n" + "browser driver path: "
+							+ driverPath + "\n" + "browser path: " + browserPath);
+		} catch (NullPointerException e) {
+			System.err.println("Configuration missing or invalid: " + e.toString());
 		} catch (IOException e) {
 			System.err.println("Exception (ignored): " + e.toString());
 		}
